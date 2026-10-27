@@ -1,0 +1,11 @@
+{
+  "title": "friendkos",
+  "description": "Manage budgets across cash and digital accounts, track classes and deadlines, and keep a private daily journal—all in one app for students living away from home.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
