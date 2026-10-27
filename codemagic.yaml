@@ -11,6 +11,17 @@ workflows:
           set -e
           npm install
           npm run build
+      - name: Siapkan Capacitor dan sync iOS
+        script: |
+          set -e
+          npm install @capacitor/core @capacitor/cli @capacitor/ios
+          if [ ! -f capacitor.config.json ] && [ ! -f capacitor.config.ts ]; then
+            printf '{\n  "appId": "com.ganteng.friendkos",\n  "appName": "FriendKos",\n  "webDir": "dist"\n}\n' > capacitor.config.json
+          fi
+          if [ ! -d ios/App/App.xcodeproj ]; then
+            rm -rf ios
+            npx cap add ios
+          fi
           npx cap sync ios
       - name: Compile dan buat IPA tanpa signing
         script: |
