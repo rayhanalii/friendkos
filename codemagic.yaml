@@ -9,7 +9,7 @@ workflows:
       - name: Install dan build web
         script: |
           set -e
-          npm ci
+          npm install
           npm run build
           npx cap sync ios
       - name: Compile dan buat IPA tanpa signing
