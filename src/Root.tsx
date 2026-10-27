@@ -7,7 +7,7 @@ import {
   watchAuth,
 } from "./firebase"
 
-export type User = { id: string name: string mode: "guest" | "google" }
+export type User = { id: string; name: string; mode: "guest" | "google" }
 const KEY = "friendkos:user"
 
 export default function Root() {
