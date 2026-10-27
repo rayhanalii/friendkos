@@ -1,59 +1,33 @@
 workflows:
-  # 1) Build tanpa signing: memastikan kode Swift dapat dikompilasi (simulator).
-  ios-compile-check:
-    name: FriendKos - compile check
+  ios-unsigned:
+    name: FriendKos - Unsigned Build
     instance_type: mac_mini_m2
-    max_build_duration: 40
+    max_build_duration: 30
     environment:
-      xcode: latest
+      node: 22
     scripts:
-      - name: Siapkan proyek Xcode (XcodeGen)
+      - name: Install dan build web
         script: |
-          brew install xcodegen
-          cd ios
-          test -f FriendKos/GoogleService-Info.plist || { echo "GoogleService-Info.plist tidak ditemukan"; exit 1; }
-          export REVERSED_CLIENT_ID=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" FriendKos/GoogleService-Info.plist 2>/dev/null || echo "com.googleusercontent.apps.placeholder")
-          xcodegen generate
-      - name: Build untuk simulator
+          set -e
+          npm ci
+          npm run build
+          npx cap sync ios
+      - name: Compile dan buat IPA tanpa signing
         script: |
-          cd ios
-          xcodebuild -project FriendKos.xcodeproj -scheme FriendKos \
-            -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO build
-
-  # 2) Build IPA bertanda tangan untuk TestFlight / App Store.
-  ios-release:
-    name: FriendKos - TestFlight
-    instance_type: mac_mini_m2
-    max_build_duration: 60
-    integrations:
-      app_store_connect: codemagic   # ganti dengan nama integrasi App Store Connect kamu
-    environment:
-      xcode: latest
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.ganteng.friendkos
-    scripts:
-      - name: Siapkan proyek Xcode (XcodeGen)
-        script: |
-          brew install xcodegen
-          cd ios
-          export REVERSED_CLIENT_ID=$(/usr/libexec/PlistBuddy -c "Print :REVERSED_CLIENT_ID" FriendKos/GoogleService-Info.plist 2>/dev/null || echo "com.googleusercontent.apps.placeholder")
-          xcodegen generate
-      - name: Terapkan provisioning profile
-        script: xcode-project use-profiles --project ios/FriendKos.xcodeproj
-      - name: Naikkan build number
-        script: |
-          cd ios
-          BUILD=$(app-store-connect get-latest-testflight-build-number "$APP_STORE_APPLE_ID" 2>/dev/null || echo 0)
-          agvtool new-version -all $((BUILD + 1))
-      - name: Build IPA
-        script: |
-          xcode-project build-ipa --project ios/FriendKos.xcodeproj --scheme FriendKos
+          set -e
+          cd ios/App
+          xcodebuild -project App.xcodeproj \
+            -scheme App \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            archive -archivePath build/App.xcarchive
+          rm -rf Payload FriendKos.ipa
+          mkdir -p Payload
+          cp -R build/App.xcarchive/Products/Applications/App.app Payload/
+          zip -r FriendKos.ipa Payload
     artifacts:
-      - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
+      - ios/App/FriendKos.ipa
