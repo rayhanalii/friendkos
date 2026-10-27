@@ -4,7 +4,7 @@ import { loadCloud, saveCloud } from "./firebase"
 
 type IconName = "grid" | "wallet" | "calendar" | "book" | "settings" | "bell" | "eye" | "arrowUp" | "arrowDown" | "plus" | "more" | "check" | "clock" | "home" | "eyeOff"
 
-function Icon({ name, size = 20 }: { name: IconName size?: number }) {
+function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   const paths: Record<IconName, ReactNode> = {
     grid: (
       <>
